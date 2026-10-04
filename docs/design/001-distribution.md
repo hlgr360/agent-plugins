@@ -73,7 +73,7 @@ The user's data (`~/.claude-mnemonic`: the database, settings and embeddings) is
 
 ## Claude Desktop
 
-- Code tab: loads the whole plugin. Cowork: skills, commands, hooks and local MCP servers. Chat: skills and commands only.
+- Code tab: loads the whole plugin. Cowork: skills, commands, hooks and local MCP servers. Chat: skills and commands, per the docs; **observed: chat can also use the plugin's own MCP server** (confirmed by the maintainer on 2026-10-04, plugin installed from a Claude org's inventory). So the connector in `claude_desktop_config.json` (the `make install-desktop` route) is not needed with the plugin; the two are alternatives, and having both may list two connectors.
 - A plugin uploaded to a Claude account syncs into Claude Code as `<name>@synced`; it is not loaded while a local plugin of the same name exists.
 - An `.mcpb` has no field for persistent instructions. The plugin carries the instruction as a skill, but in Chat the skill did **not** make the model call the connector (one prompt measured), so the pasted instruction is still required. The `.mcpb` itself was evaluated and not built.
 
@@ -94,7 +94,7 @@ Verified (2026-10-04):
 - `claude plugin validate` reports only the reserved-name error for the plugin name.
 - `v0.21.95.2` (the current entry) the same way: checksums, `cosign verify-blob`, certificate identity. `v0.21.95.1` shipped a 514-character plugin description, which Claude's org upload form rejects (limit 500; `claude plugin validate` does not check it); `.2` has 371, and the claude-mnemonic build now checks the limit. The release build is reproducible: the plugin zip built in CI has the same sha256 as one built locally.
 
-Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install, Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
+Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install (the chat connector itself is confirmed, above), Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 
 ## Sequence
 
