@@ -1,6 +1,6 @@
 # 001: Distributing claude-mnemonic (and later plugins) for coding agents
 
-Status: **proposed**. Written 2026-10-04.
+Status: **implemented for Claude Code and Claude Desktop** (2026-10-04); other agents are concept only. Written 2026-10-04, updated the same day after the first release (`v0.21.95.1`).
 
 ## Goal
 
@@ -13,11 +13,12 @@ Make `claude-mnemonic` (the fork at `hlgr360/claude-mnemonic`) installable as a 
 | Catalogue repository | `hlgr360/agent-plugins`, public, agent-neutral name |
 | Marketplace name | `hlgr360` (it lives in `.claude-plugin/marketplace.json`; the repository name never appears in an install id) |
 | Plugin name | `claude-mnemonic`, installed as `claude-mnemonic@hlgr360` |
-| Plugin source | Stays in the `claude-mnemonic` repository, in its `plugin/` directory |
-| Binaries | Built and published by a release workflow in the `claude-mnemonic` repository |
+| Plugin source | A **thin zip with no binaries**, built and signed by the `claude-mnemonic` release workflow and listed here as an `archive` source (URL and sha256). One zip serves every platform. |
+| Binaries | Built on native runners and published as GitHub Release assets by the `claude-mnemonic` repository; the plugin downloads and verifies them on first use |
+| Versions | The upstream version the release contains plus a fork number: `0.21.95.1`, `.2`, ... (see below) |
 | Other agents | Concept only (see below); not built now |
 
-The plugin name stays the same as upstream's so that slash commands (`/claude-mnemonic:dashboard`) and the docs do not change. A marketplace may hold the same plugin name as another marketplace, but the two plugins would share the same commands, hooks, MCP server name, data directory and port, so they are alternatives: install one.
+The plugin name stays the same as upstream's so that nothing existing changes. A marketplace may hold the same plugin name as another marketplace, but the two plugins would share the same hooks, MCP server name, data directory and port, so they are alternatives: install one. `claude plugin validate` reports the name as reserved (third-party names may not start with `claude-`); Claude Code installs and loads such a plugin all the same, and the install through this catalogue was tested.
 
 ## Architecture
 
@@ -32,45 +33,49 @@ The core is agent-neutral: a local worker (HTTP, SQLite, embeddings), a stdio MC
 
 ## The catalogue
 
-`.claude-plugin/marketplace.json` in this repository lists plugins as external, pinned sources, for example:
+`.claude-plugin/marketplace.json` in this repository lists each plugin as an external, pinned source. For claude-mnemonic:
 
 ```json
 {
   "name": "claude-mnemonic",
-  "source": { "source": "git-subdir", "url": "hlgr360/claude-mnemonic", "path": "plugin", "ref": "v1.0.0" }
+  "source": {
+    "source": "archive",
+    "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.1/claude-mnemonic-plugin_0.21.95.1.zip",
+    "sha256": "e5806ebeeefccde2ded4333d8bda56dc14a93bdb75ce5219c737efef28b6917c"
+  }
 }
 ```
 
-The marketplace repository does not need to contain plugin files. Each plugin keeps its own repository and release cycle. Pinning `ref` (and optionally `sha`) to a release tag makes the plugin version and the binaries it fetches the same thing.
+An `archive` source is a zip over HTTPS with a sha256 pin; Claude Code refuses a download that does not match (tested: a wrong value fails with "Plugin archive integrity check failed" and nothing is installed). It needs Claude Code 2.1.224 or later. The plugin root is at the top of the zip. The marketplace repository does not need to contain plugin files; each plugin keeps its own repository and release cycle. Work or company plugins are published in their own marketplaces, never here.
 
-Work or company plugins are published in their own marketplaces, never here.
+**A new release is a catalogue change:** point `url` and `sha256` at the new release's plugin zip (its sha256 is in the release's `checksums.txt`). The plugin version comes from the zip's `plugin.json`, so the entry carries no `version` of its own.
 
 ## How the plugin and its binaries fit together
 
-1. A release workflow in the `claude-mnemonic` repository builds the binaries per platform and publishes them as GitHub Release assets, signed (cosign keyless) with a checksums file.
-2. The plugin in `plugin/` holds only thin wrappers (hooks, MCP launcher, commands).
-3. On first run, and whenever the plugin version changes, the wrapper downloads the matching binaries for the platform from that release, verifies the checksum and signature, and stores them in `~/.claude-mnemonic/bin`, which survives plugin cache replacement.
-4. Updating means bumping the `ref` in the catalogue; users update the plugin and the wrapper fetches the new binaries.
+1. The release workflow in the `claude-mnemonic` repository builds the binaries per platform and publishes them as release assets, with a `checksums.txt` signed by cosign (keyless), together with the plugin zip. The signature covers the zip too.
+2. The plugin holds only thin wrappers (hooks, MCP launcher, skills) and `lib/ensure-binaries.sh`.
+3. On first use the wrapper downloads the archive of the plugin's own version, checks it against `checksums.txt` and, when cosign is installed, against the signature (the same check the in-app updater makes), and installs the binaries into `~/.claude-mnemonic/bin`, where the hooks and the worker already look first. Supported: macOS arm64 and Linux amd64; Windows is not supported by the plugin yet.
+4. **Who manages the binaries: the plugin installs, the in-app updater keeps working.** It installs when the worker or MCP server is missing, or when its version marker is older than the plugin's; it **never replaces binaries that have no marker** (`make install`, `install.sh`) and never downgrades. The plugin version is the floor.
+5. Hooks never wait for the download: the session-start hook starts it in the background, so the first session may run without memory; the MCP server waits for it.
 
-An alternative is an `archive` source pointing at a full plugin zip. A catalogue entry takes one URL, so that would need a separate entry per platform. Not chosen.
-
-To decide later: the plugin's wrapper and the application's own self-updater would both manage binaries. One of them should be switched off in plugin mode.
+The user's data (`~/.claude-mnemonic`: the database, settings and embeddings) is separate from the binaries and is never touched by the plugin. The repository's unregister and uninstall scripts keep it unless `--purge` is given.
 
 ## Release pipeline
 
-- Own GitHub Actions workflow, one job per native runner (macOS arm64, Linux amd64, Windows amd64: the build uses CGO), the same archive layout as today, keyless cosign signing, checksums, then publish.
-- Upstream's workflow calls a shared reusable workflow and needs a GoReleaser key the fork does not have; the fork's `Release` workflow is disabled for that reason.
-- **Prerequisite:** the in-app updater, `install.sh`, `install.ps1`, `update-marketplace.sh` and `register-plugin.sh` are hard-wired to upstream's repository and signing identity (a fork-signed release fails the updater's check). They must become repository-agnostic first.
+- Own GitHub Actions workflow (`release-native.yaml` in the `claude-mnemonic` repository), one job per native runner (macOS arm64, Linux amd64, Windows amd64: the build uses CGO), a plugin job, keyless cosign signing of `checksums.txt` with a verification step that uses the updater's own arguments, then publish. Only a version tag publishes.
+- Upstream's workflow calls a shared reusable workflow and needs a GoReleaser key the fork does not have; it is guarded to run only in upstream's own repository.
+- The in-app updater, the installers and the release scripts take the release repository and the signing identity from one place each, so a fork needs no code change.
+- **Versions:** a fork release is named for the upstream version it contains plus a fork number, `v0.21.95.1`, `.2`, ...; the first release is `v0.21.95.1`. A letter suffix (`0.21.95a`) was rejected: the updater compares dotted numbers only and would mis-read it. Neither form is valid semver, which matters only for the `.mcpb` bundle.
 
 ## Local build and test
 
-One script (`scripts/build-plugin.sh` in the plugin's repository) is the single entry point, used by CI and by hand: compile, assemble the plugin tree, validate it (`claude plugin validate <tree> --strict`), zip deterministically. Test with `claude --plugin-dir <tree>`; the plugin cache is keyed by version, so a rebuild needs a new version or `--plugin-dir`. The version comes from one source, not several files.
+`scripts/build-plugin.sh <version>` in the `claude-mnemonic` repository is the single entry point, used by CI and by hand: assemble the tree, validate it (`claude plugin validate --strict`, accepting exactly the reserved-name error), write a deterministic zip. Try it with `claude --plugin-dir dist/plugin` (its hooks run for real). The catalogue entry itself can be tested without touching a real setup: run `claude plugin marketplace add` and `claude plugin install claude-mnemonic@hlgr360` with `HOME` and `CLAUDE_CONFIG_DIR` pointing at an empty directory.
 
 ## Claude Desktop
 
 - Code tab: loads the whole plugin. Cowork: skills, commands, hooks and local MCP servers. Chat: skills and commands only.
-- Chat therefore needs the **`.mcpb`** (a zip with `manifest.json`, platform binaries and optional `user_config`), built by the same release. The existing config-file route stays.
-- An `.mcpb` has no field for persistent instructions. A skill in the plugin could carry "use the memory when I ask about earlier work"; whether skills are honoured in Chat for this purpose needs testing.
+- A plugin uploaded to a Claude account syncs into Claude Code as `<name>@synced`; it is not loaded while a local plugin of the same name exists.
+- An `.mcpb` has no field for persistent instructions. The plugin carries the instruction as a skill, but in Chat the skill did **not** make the model call the connector (one prompt measured), so the pasted instruction is still required. The `.mcpb` itself was evaluated and not built.
 
 ## Later targets (concept only)
 
@@ -82,26 +87,24 @@ One script (`scripts/build-plugin.sh` in the plugin's repository) is the single 
 
 ## Verified and not verified
 
-Confirmed from the Claude Code documentation (as reported by a research pass; URLs: `code.claude.com/docs/en/plugins/marketplace-reference.md`, `.../plugins/publish.md`, `claude.com/docs/plugins/platform-support.md`, `claude.com/docs/connectors/building/mcpb.md`; not individually re-fetched): external plugin sources and pinning, one marketplace per `name`, plugin ids `plugin@marketplace`, where plugins load in Desktop, the `.mcpb` format. `claude plugin validate` exists and validates a marketplace manifest.
+Verified (2026-10-04):
+- The release `v0.21.95.1`: six assets, checksums match, `cosign verify-blob` passes with the updater's arguments, the certificate identity is the release workflow at the tag.
+- The plugin's first-run download against that real release with real cosign, in an isolated home directory.
+- The catalogue entry: added to an empty Claude config, installed (version `0.21.95.1`, 3 skills, 6 hooks, 1 MCP server), and a wrong sha256 is refused.
+- `claude plugin validate` reports only the reserved-name error for the plugin name.
 
-Not confirmed: what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, whether skills carry persistent instructions in Chat, and whether Cowork runs hooks on the user's computer in practice.
-
-## Open decisions
-
-1. Binary delivery: verified download on first run (leaning) or an `archive` source.
-2. Which of the plugin wrapper and the self-updater manages binaries in plugin mode.
-3. Whether the `marketplace.json` kept in the application repository (used by its install script) is renamed or dropped, since two marketplaces cannot share a name.
+Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install, Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 
 ## Sequence
 
-1. Make the updater and the scripts repository-agnostic (`claude-mnemonic`).
-2. Add the release workflow (`claude-mnemonic`).
-3. Add the build script, the plugin manifests and the marketplace rename (`claude-mnemonic`).
-4. Add the catalogue entry here once a release exists.
-5. Build the `.mcpb` (`claude-mnemonic`, existing ticket on the Desktop extension).
-6. Add the instruction skill and test it in Chat.
-7. Later: a design note for Copilot CLI and pi.
+1. Make the updater and the scripts repository-agnostic (`claude-mnemonic`). Done.
+2. Add the release workflow (`claude-mnemonic`). Done.
+3. Add the build script and the thin plugin (`claude-mnemonic`). Done; the marketplace rename was not needed (the names differ).
+4. Add the catalogue entry here once a release exists. Done with `v0.21.95.1`.
+5. Build the `.mcpb` (`claude-mnemonic`, ticket #24). Evaluated, not built.
+6. The instruction skill and its test in Chat. Done; the paste step stays.
+7. Later: a design note for Copilot CLI and pi (issue #2).
 
 ## Risks
 
-Binary size (about 166 MB of embedded libraries per platform), CGO builds needing native runners, a plugin that diverges from upstream's update channel, and the unverified points above.
+Binary size (about 31 MB per platform archive), CGO builds needing native runners, a plugin that diverges from upstream's update channel, a catalogue entry that must be updated by hand for each release, and the unverified points above.
