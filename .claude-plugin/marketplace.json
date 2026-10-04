@@ -17,11 +17,7 @@
       ],
       "homepage": "https://github.com/hlgr360/claude-mnemonic",
       "license": "MIT",
-      "source": {
-        "source": "archive",
-        "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.2/claude-mnemonic-plugin_0.21.95.2.zip",
-        "sha256": "8c50990cb6a58d55017f34f6759e6fce468fce2a7955d387b88b1b4f8879cc3f"
-      }
+      "source": "./plugins/claude-mnemonic"
     }
   ]
 }
