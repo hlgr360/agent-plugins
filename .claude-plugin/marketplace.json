@@ -4,5 +4,24 @@
   "owner": {
     "name": "hlgr360"
   },
-  "plugins": []
+  "plugins": [
+    {
+      "name": "claude-mnemonic",
+      "description": "Persistent memory for Claude Code and Claude Desktop: decisions, findings and fixes from earlier sessions, searchable and shared by both, with a local web dashboard. Fork of lukaszraczylo/claude-mnemonic.",
+      "category": "productivity",
+      "tags": [
+        "memory",
+        "persistence",
+        "search",
+        "context"
+      ],
+      "homepage": "https://github.com/hlgr360/claude-mnemonic",
+      "license": "MIT",
+      "source": {
+        "source": "archive",
+        "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.1/claude-mnemonic-plugin_0.21.95.1.zip",
+        "sha256": "e5806ebeeefccde2ded4333d8bda56dc14a93bdb75ce5219c737efef28b6917c"
+      }
+    }
+  ]
 }
