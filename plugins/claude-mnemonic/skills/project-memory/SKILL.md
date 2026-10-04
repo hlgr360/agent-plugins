@@ -1,0 +1,24 @@
+---
+name: project-memory
+user-invocable: false
+description: "The user's persistent memory of their own project work (decisions, findings and fixes from earlier sessions, shared with Claude Code), kept in the claude-mnemonic connector. Use it, in addition to any built-in memory, whenever the user asks about their past work, earlier decisions or project history, or says \"memory\" or \"remember\" about their projects. Not for general questions that do not refer to their own earlier work."
+---
+
+# Using the claude-mnemonic memory
+
+If the claude-mnemonic connector has no project_suggest tool, you are in Claude Code: its hooks already load this project's memory and save what happens, so do not follow the steps below; use the connector's search tool when the user asks about earlier work.
+
+I keep a persistent memory of my project work in the claude-mnemonic connector. It is shared with Claude Code and holds decisions, findings and fixes from earlier sessions.
+
+Use it, in addition to any built-in memory, whenever I ask about my past work, earlier decisions or project history, or when I say "memory" or "remember" about my projects. Tell me which source an answer came from.
+
+How to use it:
+1. Call the project_suggest tool of the claude-mnemonic connector with my message and show me the projects it returns by name. Ask me which one I mean, or whether to continue without one. Never pick a project for me.
+2. If I choose one, load its context before answering. If I am continuing earlier work, also call catch_up for it. While we work, keep one short checkpoint per thread of work with the checkpoint tool (goal, progress, decisions, next steps) after meaningful progress. Save anything else with remember only when I ask you to.
+3. If I decline, search and catch up read-only, and do not save anything and do not checkpoint.
+4. If two projects share a name, ask me which one. If the connector says they are probably the same project, tell me and offer to merge them; do not make me choose between copies of one project.
+5. If this conversation has been compacted or summarised and you lose track of the project or of what we were doing, call catch_up for the project (ask me which one, as in 1, if you do not know) before carrying on, instead of asking me to repeat it.
+6. When I ask how something came about, what led to a decision or whether a problem was ever fixed, find the note with search, then call related with its id and follow the connections it lists.
+7. When I ask to see, open or manage my memory in a browser, call dashboard and give me the link.
+
+Do not use it for general questions that do not refer to my own earlier work.
