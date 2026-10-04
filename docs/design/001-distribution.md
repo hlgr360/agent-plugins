@@ -13,7 +13,7 @@ Make `claude-mnemonic` (the fork at `hlgr360/claude-mnemonic`) installable as a 
 | Catalogue repository | `hlgr360/agent-plugins`, public, agent-neutral name |
 | Marketplace name | `hlgr360` (it lives in `.claude-plugin/marketplace.json`; the repository name never appears in an install id) |
 | Plugin name | `claude-mnemonic`, installed as `claude-mnemonic@hlgr360` |
-| Plugin source | A **thin zip with no binaries**, built and signed by the `claude-mnemonic` release workflow and listed here as an `archive` source (URL and sha256). One zip serves every platform. |
+| Plugin source | A **thin zip with no binaries**, built and signed by the `claude-mnemonic` release workflow and committed here, unpacked, as an in-repo source (it was an `archive` source with URL and sha256 until `0.21.95.3`). One zip serves every platform. |
 | Binaries | Built on native runners and published as GitHub Release assets by the `claude-mnemonic` repository; the plugin downloads and verifies them on first use |
 | Versions | The upstream version the release contains plus a fork number: `0.21.95.1`, `.2`, ... (see below) |
 | Other agents | Concept only (see below); not built now |
@@ -33,22 +33,20 @@ The core is agent-neutral: a local worker (HTTP, SQLite, embeddings), a stdio MC
 
 ## The catalogue
 
-`.claude-plugin/marketplace.json` in this repository lists each plugin as an external, pinned source. For claude-mnemonic:
+`.claude-plugin/marketplace.json` in this repository lists each plugin with an **in-repo source**, and the plugin itself is committed under `plugins/<name>/`. For claude-mnemonic:
 
 ```json
 {
   "name": "claude-mnemonic",
-  "source": {
-    "source": "archive",
-    "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.2/claude-mnemonic-plugin_0.21.95.2.zip",
-    "sha256": "8c50990cb6a58d55017f34f6759e6fce468fce2a7955d387b88b1b4f8879cc3f"
-  }
+  "source": "./plugins/claude-mnemonic"
 }
 ```
 
-An `archive` source is a zip over HTTPS with a sha256 pin; Claude Code refuses a download that does not match (tested: a wrong value fails with "Plugin archive integrity check failed" and nothing is installed). It needs Claude Code 2.1.224 or later. The plugin root is at the top of the zip. The marketplace repository does not need to contain plugin files; each plugin keeps its own repository and release cycle. Work or company plugins are published in their own marketplaces, never here.
+The tree under `plugins/claude-mnemonic/` is the release's plugin zip, unpacked by `scripts/update-catalogue.sh` in the `claude-mnemonic` repository after it has checked the download (the sha256 equals the one in the release's signed `checksums.txt`, the signature verifies, `plugin.json` carries the tag's version and is within the upload form's limits) and installed the edited catalogue in an isolated Claude config. The pull request records the zip's sha256. Because the plugin is a thin zip with no binaries, it is small (a few hundred lines); each plugin keeps its own repository and release cycle, and this repository only carries the released tree. Work or company plugins are published in their own marketplaces, never here.
 
-**A new release is a catalogue change:** point `url` and `sha256` at the new release's plugin zip (its sha256 is in the release's `checksums.txt`). The plugin version comes from the zip's `plugin.json`, so the entry carries no `version` of its own.
+**A new release is a catalogue change:** run the script for the new tag; it replaces `plugins/claude-mnemonic/` and opens the pull request. The plugin version comes from the tree's `plugin.json`, so the entry carries no `version` of its own.
+
+**Why not an `archive` source.** The first releases used one (the zip's URL and a sha256 pin; Claude Code refuses a download that does not match, tested). It needs Claude Code 2.1.224 or later, and Claude Desktop's marketplace sync, which goes through claude.ai's servers, failed with "Marketplace sync failed" for it while Claude Code installed fine. The cause is not confirmed (the check is to add another in-repo marketplace in the same dialog); the in-repo source is the form the other marketplaces use. If it is confirmed, the status of this paragraph changes from "likely" to "known".
 
 ## How the plugin and its binaries fit together
 
@@ -93,6 +91,8 @@ Verified (2026-10-04):
 - The catalogue entry: added to an empty Claude config, installed (version `0.21.95.1`, 3 skills, 6 hooks, 1 MCP server), and a wrong sha256 is refused.
 - `claude plugin validate` reports only the reserved-name error for the plugin name.
 - `v0.21.95.2` (the current entry) the same way: checksums, `cosign verify-blob`, certificate identity. `v0.21.95.1` shipped a 514-character plugin description, which Claude's org upload form rejects (limit 500; `claude plugin validate` does not check it); `.2` has 371, and the claude-mnemonic build now checks the limit. The release build is reproducible: the plugin zip built in CI has the same sha256 as one built locally.
+
+- `v0.21.95.3` and the in-repo catalogue (2026-10-04): the release checks as before, and the catalogue edited by `scripts/update-catalogue.sh` installs `claude-mnemonic@hlgr360 0.21.95.3` in an isolated Claude config. **Not verified: that Claude Desktop's marketplace sync accepts it** (see above).
 
 Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install (the chat connector itself is confirmed, above), Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 

@@ -19,7 +19,7 @@ The marketplace is named `hlgr360`, so plugins are installed as `<plugin>@hlgr36
 |---|---|---|
 | [claude-mnemonic](https://github.com/hlgr360/claude-mnemonic) | Persistent memory for Claude Code and Claude Desktop: the decisions, findings and fixes from earlier sessions, searchable and shared by both, with a local web dashboard. A fork of [lukaszraczylo/claude-mnemonic](https://github.com/lukaszraczylo/claude-mnemonic) (MIT). | `/plugin install claude-mnemonic@hlgr360` |
 
-Requirements: Claude Code 2.1.224 or later (the entries are `archive` sources). `claude-mnemonic` downloads its binaries from its own release on first use and checks them (see the plugin's README); it supports macOS on Apple silicon and Linux on x86-64, and should not be installed next to another install of claude-mnemonic (they register the same hooks). Claude Desktop chat needs one extra setting, described in the plugin's README.
+Requirements: none for the catalogue itself (the plugins are in this repository, as in-repo sources; an earlier `archive` source needed Claude Code 2.1.224 and was not accepted by Claude Desktop's marketplace sync). `claude-mnemonic` downloads its binaries from its own release on first use and checks them (see the plugin's README); it supports macOS on Apple silicon and Linux on x86-64, and should not be installed next to another install of claude-mnemonic (they register the same hooks). Claude Desktop chat needs one extra setting, described in the plugin's README.
 
 `claude plugin validate` on this catalogue reports `claude-mnemonic` as a reserved name (third-party names may not start with `claude-`). That check is made only by the validator; Claude Code installs and loads the plugin all the same.
 
@@ -32,4 +32,5 @@ Not supported yet. The design note describes how GitHub Copilot CLI and pi would
 | Path | What |
 |---|---|
 | `.claude-plugin/marketplace.json` | Claude Code's catalogue |
+| `plugins/<name>/` | The plugin as released, unpacked by the plugin's own update script (do not edit by hand) |
 | `docs/design/` | Design notes |
