@@ -46,7 +46,7 @@ The tree under `plugins/claude-mnemonic/` is the release's plugin zip, unpacked 
 
 **A new release is a catalogue change:** run the script for the new tag; it replaces `plugins/claude-mnemonic/` and opens the pull request. The plugin version comes from the tree's `plugin.json`, so the entry carries no `version` of its own.
 
-**Why not an `archive` source.** The first releases used one (the zip's URL and a sha256 pin; Claude Code refuses a download that does not match, tested). It needs Claude Code 2.1.224 or later, and Claude Desktop's marketplace sync, which goes through claude.ai's servers, failed with "Marketplace sync failed" for it while Claude Code installed fine. The cause is not confirmed (the check is to add another in-repo marketplace in the same dialog); the in-repo source is the form the other marketplaces use. If it is confirmed, the status of this paragraph changes from "likely" to "known".
+**Why not an `archive` source.** The first releases used one (the zip's URL and a sha256 pin; Claude Code refuses a download that does not match, tested). It needs Claude Code 2.1.224 or later, and Claude Desktop's marketplace sync, which goes through claude.ai's servers, failed with "Marketplace sync failed" for it while Claude Code installed fine. After the switch to the in-repo source (`0.21.95.3`) the maintainer confirmed that adding the marketplace and installing the plugin works (2026-10-04). The control (an in-repo marketplace failing or working before the change) was not run, so the `archive` source is the probable cause, not an isolated one.
 
 ## How the plugin and its binaries fit together
 
@@ -92,7 +92,7 @@ Verified (2026-10-04):
 - `claude plugin validate` reports only the reserved-name error for the plugin name.
 - `v0.21.95.2` (the current entry) the same way: checksums, `cosign verify-blob`, certificate identity. `v0.21.95.1` shipped a 514-character plugin description, which Claude's org upload form rejects (limit 500; `claude plugin validate` does not check it); `.2` has 371, and the claude-mnemonic build now checks the limit. The release build is reproducible: the plugin zip built in CI has the same sha256 as one built locally.
 
-- `v0.21.95.3` and the in-repo catalogue (2026-10-04): the release checks as before, and the catalogue edited by `scripts/update-catalogue.sh` installs `claude-mnemonic@hlgr360 0.21.95.3` in an isolated Claude config. **Not verified: that Claude Desktop's marketplace sync accepts it** (see above).
+- `v0.21.95.3` and the in-repo catalogue (2026-10-04): the release checks as before, and the catalogue edited by `scripts/update-catalogue.sh` installs `claude-mnemonic@hlgr360 0.21.95.3` in an isolated Claude config. Claude Desktop's marketplace sync accepts it and the plugin installs (confirmed by the maintainer the same day; see above).
 
 Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install (the chat connector itself is confirmed, above), Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 
