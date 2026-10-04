@@ -40,8 +40,8 @@ The core is agent-neutral: a local worker (HTTP, SQLite, embeddings), a stdio MC
   "name": "claude-mnemonic",
   "source": {
     "source": "archive",
-    "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.1/claude-mnemonic-plugin_0.21.95.1.zip",
-    "sha256": "e5806ebeeefccde2ded4333d8bda56dc14a93bdb75ce5219c737efef28b6917c"
+    "url": "https://github.com/hlgr360/claude-mnemonic/releases/download/v0.21.95.2/claude-mnemonic-plugin_0.21.95.2.zip",
+    "sha256": "8c50990cb6a58d55017f34f6759e6fce468fce2a7955d387b88b1b4f8879cc3f"
   }
 }
 ```
@@ -92,6 +92,7 @@ Verified (2026-10-04):
 - The plugin's first-run download against that real release with real cosign, in an isolated home directory.
 - The catalogue entry: added to an empty Claude config, installed (version `0.21.95.1`, 3 skills, 6 hooks, 1 MCP server), and a wrong sha256 is refused.
 - `claude plugin validate` reports only the reserved-name error for the plugin name.
+- `v0.21.95.2` (the current entry) the same way: checksums, `cosign verify-blob`, certificate identity. `v0.21.95.1` shipped a 514-character plugin description, which Claude's org upload form rejects (limit 500; `claude plugin validate` does not check it); `.2` has 371, and the claude-mnemonic build now checks the limit. The release build is reproducible: the plugin zip built in CI has the same sha256 as one built locally.
 
 Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install, Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 
