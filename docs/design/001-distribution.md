@@ -1,10 +1,10 @@
 # 001: Distributing claude-mnemonic (and later plugins) for coding agents
 
-Status: **implemented for Claude Code and Claude Desktop** (2026-10-04); other agents are concept only. Written 2026-10-04, updated the same day after the first release (`v0.21.95.1`).
+Status: **implemented**: the plugin for Claude Code (this catalogue) and a Desktop extension for Claude Desktop (a file on the `claude-mnemonic` release); other agents are concept only. Written 2026-10-04; revised 2026-10-05 after it turned out that Desktop does not give a plugin's tools to chat or Cowork (see "Claude Desktop").
 
 ## Goal
 
-Make `claude-mnemonic` (the fork at `hlgr360/claude-mnemonic`) installable as a plugin for **Claude Code and Claude Desktop**, from a public catalogue that can later hold more plugins, and keep the design open for **GitHub Copilot CLI and pi** without building for them yet.
+Make `claude-mnemonic` (the fork at `hlgr360/claude-mnemonic`) installable for **Claude Code (a plugin) and Claude Desktop (an extension)**, from a public catalogue that can later hold more plugins, and keep the design open for **GitHub Copilot CLI and pi** without building for them yet.
 
 ## Decisions taken
 
@@ -71,9 +71,24 @@ The user's data (`~/.claude-mnemonic`: the database, settings and embeddings) is
 
 ## Claude Desktop
 
-- Code tab: loads the whole plugin. Cowork: skills, commands, hooks and local MCP servers. Chat: skills and commands, per the docs; **observed: chat can also use the plugin's own MCP server** (confirmed by the maintainer on 2026-10-04, plugin installed from a Claude org's inventory). So the connector in `claude_desktop_config.json` (the `make install-desktop` route) is not needed with the plugin; the two are alternatives, and having both may list two connectors.
-- A plugin uploaded to a Claude account syncs into Claude Code as `<name>@synced`; it is not loaded while a local plugin of the same name exists.
-- An `.mcpb` has no field for persistent instructions. The plugin carries the instruction as a skill, but in Chat the skill did **not** make the model call the connector (one prompt measured), so the pasted instruction is still required. The `.mcpb` itself was evaluated and not built.
+**Decision (2026-10-05): two routes, no overlap.** Claude Code installs the plugin from this catalogue; Claude Desktop (chat and Cowork) installs the **`.mcpb` extension** from the release (`claude-mnemonic-desktop_<version>.mcpb`, Settings > Extensions > Install Extension, or an organization's custom extension upload). The plugin does not go to Desktop.
+
+Why (documented, and checked in Desktop's logs on 2026-10-05):
+- Anthropic's docs: "A plugin's local MCP server runs in Cowork and Claude Code, not in chat." Desktop's logs agree: the plugin's server runs on the Mac and is announced to Desktop's local bridge, but the chat's web layer never attaches it (no `plugin:` server in its logs, ever), while config servers and extensions are attached.
+- In Cowork, `claude` runs in a Linux VM and the plugin is mounted there; its server cannot start (no binaries there, a blocked download, no build for the VM's architecture) and could not reach the worker anyway. The VM-side log is not on the Mac, so which of these fails is not seen; the docs say plugin MCP servers run on the device in local Cowork, which this build does not do.
+- Docs: "Desktop extensions run locally and are only available in Claude Desktop and Claude Code." An installed extension of the same shape (a `binary` extension, manifest 0.3) is attached to both chat and Cowork in the logs; ours was seen to reach Cowork.
+- An earlier statement here, that chat can use the plugin's own MCP server (observed 2026-10-04), was wrong: what was observed was the connector from `claude_desktop_config.json`, whose tool calls carry no `plugin:` prefix.
+
+What each gives:
+| Surface | Gets | From |
+|---|---|---|
+| Claude Code | hooks (save and load automatically), the MCP server, `/memory-dashboard`, `/memory-restart` | the plugin |
+| Claude Desktop chat and Cowork | the memory tools (including `dashboard` and `restart`, which replace the commands there: the sandbox cannot run them) | the extension |
+They share one local worker and one database. Chat also needs the instruction pasted into the personal preferences (an extension has no field for persistent instructions; a skill in the plugin was tried and did not make chat call the tools, and was removed with the plugin's Desktop role). The `make install-desktop` route (a connector in `claude_desktop_config.json`) stays for developers building from source.
+
+Other facts: a plugin uploaded to a Claude account syncs into Claude Code as `<name>@synced` and is not loaded while a local plugin of the same name exists. Never install the plugin twice (the org inventory and the marketplace): the hooks would be registered twice.
+
+The extension's manifest needs semver, so release `0.21.95.3` is `0.21.95-fork.3`; an organization uploads a new version by raising it ("Upload new version", documented).
 
 ## Later targets (concept only)
 
@@ -94,7 +109,7 @@ Verified (2026-10-04):
 
 - `v0.21.95.3` and the in-repo catalogue (2026-10-04): the release checks as before, and the catalogue edited by `scripts/update-catalogue.sh` installs `claude-mnemonic@hlgr360 0.21.95.3` in an isolated Claude config. Claude Desktop's marketplace sync accepts it and the plugin installs (confirmed by the maintainer the same day; see above).
 
-Not verified: how Claude Desktop's own plugin pages show this plugin after the catalogue install (the chat connector itself is confirmed, above), Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
+Not verified: the released extension in Chat (the spike reached Cowork), the org upload of the extension, how Desktop's own plugin pages show this plugin, Windows, what happens to installed plugins if a marketplace's source moves (docs are silent; likely remove and re-add), Copilot CLI's plugin manifest, pi's skill and MCP support, and whether Cowork runs the hooks in practice.
 
 ## Sequence
 
@@ -102,8 +117,8 @@ Not verified: how Claude Desktop's own plugin pages show this plugin after the c
 2. Add the release workflow (`claude-mnemonic`). Done.
 3. Add the build script and the thin plugin (`claude-mnemonic`). Done; the marketplace rename was not needed (the names differ).
 4. Add the catalogue entry here once a release exists. Done with `v0.21.95.1`.
-5. Build the `.mcpb` (`claude-mnemonic`, ticket #24). Evaluated, not built.
-6. The instruction skill and its test in Chat. Done; the paste step stays.
+5. Build the `.mcpb` (`claude-mnemonic`, tickets #24 and #118). Done in `v0.21.95.4`; it is the route for Claude Desktop.
+6. The instruction skill and its test in Chat. Done; it did not help and was removed; the paste step stays.
 7. Later: a design note for Copilot CLI and pi (issue #2).
 
 ## Risks
