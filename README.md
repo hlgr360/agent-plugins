@@ -4,7 +4,7 @@ A catalogue of plugins for coding agents, published by [hlgr360](https://github.
 
 The catalogue itself is agent-neutral. Each agent reads its own catalogue file from this repository; today that is Claude Code's.
 
-## Claude Code and Claude Desktop
+## Claude Code
 
 ```
 /plugin marketplace add hlgr360/agent-plugins
@@ -17,9 +17,9 @@ The marketplace is named `hlgr360`, so plugins are installed as `<plugin>@hlgr36
 
 | Plugin | What | Install |
 |---|---|---|
-| [claude-mnemonic](https://github.com/hlgr360/claude-mnemonic) | Persistent memory for Claude Code and Claude Desktop: the decisions, findings and fixes from earlier sessions, searchable and shared by both, with a local web dashboard. A fork of [lukaszraczylo/claude-mnemonic](https://github.com/lukaszraczylo/claude-mnemonic) (MIT). | `/plugin install claude-mnemonic@hlgr360` |
+| [claude-mnemonic](https://github.com/hlgr360/claude-mnemonic) | Persistent memory for Claude Code: the decisions, findings and fixes from earlier sessions, saved and loaded automatically and searchable, with a local web dashboard. Claude Desktop uses a separate extension (a `.mcpb` file on the plugin's release). A fork of [lukaszraczylo/claude-mnemonic](https://github.com/lukaszraczylo/claude-mnemonic) (MIT). | `/plugin install claude-mnemonic@hlgr360` |
 
-Requirements: none for the catalogue itself (the plugins are in this repository, as in-repo sources; an earlier `archive` source needed Claude Code 2.1.224 and was not accepted by Claude Desktop's marketplace sync). `claude-mnemonic` downloads its binaries from its own release on first use and checks them (see the plugin's README); it supports macOS on Apple silicon and Linux on x86-64, and should not be installed next to another install of claude-mnemonic (they register the same hooks). Claude Desktop chat needs one extra setting, described in the plugin's README.
+Requirements: none for the catalogue itself (the plugins are in this repository, as in-repo sources; an earlier `archive` source needed Claude Code 2.1.224 and was not accepted by Claude Desktop's marketplace sync). `claude-mnemonic` downloads its binaries from its own release on first use and checks them (see the plugin's README); it supports macOS on Apple silicon and Linux on x86-64, and should not be installed next to another install of claude-mnemonic (they register the same hooks). Claude Desktop is not served by this plugin: see the project README for the Desktop extension and the one setting chat needs.
 
 `claude plugin validate` on this catalogue reports `claude-mnemonic` as a reserved name (third-party names may not start with `claude-`). That check is made only by the validator; Claude Code installs and loads the plugin all the same.
 
