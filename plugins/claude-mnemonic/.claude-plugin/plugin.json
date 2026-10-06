@@ -1,6 +1,6 @@
 {
   "name": "claude-mnemonic",
-  "version": "0.21.105.1",
+  "version": "0.21.105.2",
   "description": "Persistent memory for Claude Code: decisions, findings and fixes from earlier sessions, saved and loaded automatically, searchable, with a local web dashboard. Binaries are downloaded and verified from this fork's release on first use. Claude Desktop is a separate install: the Desktop extension on the same release. Fork of lukaszraczylo/claude-mnemonic (MIT).",
   "author": {
     "name": "hlgr360",
