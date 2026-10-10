@@ -18,6 +18,21 @@
       "homepage": "https://github.com/hlgr360/claude-mnemonic",
       "license": "MIT",
       "source": "./plugins/claude-mnemonic"
+    },
+    {
+      "name": "local-llm-mcp",
+      "description": "Offload code-shaped work (generation, review, refactoring, test-writing) to a local LLM: Ollama, llama-server, vLLM or LM Studio, with file-aware tools that read files server-side and an optional Read-gate hook. Fork of Jadael/OllamaClaude.",
+      "category": "development",
+      "tags": [
+        "llm",
+        "local-llm",
+        "ollama",
+        "llama.cpp",
+        "code-review"
+      ],
+      "homepage": "https://github.com/hlgr360/local-llm-mcp",
+      "license": "AGPL-3.0-only",
+      "source": "./plugins/local-llm-mcp"
     }
   ]
 }
