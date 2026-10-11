@@ -13,7 +13,7 @@ server, so Claude never has to read them itself.
 ## What it installs
 
 - **The `local_llm` MCP server** (17 `local_llm_*` tools), run with
-  `npx -y github:hlgr360/local-llm-mcp#v3.4.0`. Besides generating, reviewing and explaining
+  `npx -y github:hlgr360/local-llm-mcp#v3.5.0`. Besides generating, reviewing and explaining
   code and files, it can review git changes without loading the diff into Claude's context
   (`local_llm_review_diff`) and digest long test or build logs into their failures
   (`local_llm_digest_file`). A plugin has no build step, so the server is
@@ -24,6 +24,11 @@ server, so Claude never has to read them itself.
   `local_llm_explain_file` or `local_llm_analyze_files` instead. Reading the same file again
   goes through, so editing still works. It only does this while a local LLM server answers
   (the same one the MCP server finds, see below); otherwise it lets every `Read` through.
+- **A prompt hook** (`UserPromptSubmit`, needs `jq` and `curl`). Claude Code loads MCP tools as
+  deferred names, which Claude rarely reaches for unprompted. When a prompt asks to review
+  git changes, look into test, build or CI output and logs, or review or explain a file, the
+  hook adds one line to Claude's context naming the matching `local_llm_*` tool. Most prompts
+  cost no network call; a hint is only added while a local LLM server answers.
 
 ## Finding the server
 
