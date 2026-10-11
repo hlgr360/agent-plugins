@@ -12,8 +12,11 @@ server, so Claude never has to read them itself.
 
 ## What it installs
 
-- **The `local_llm` MCP server** (15 `local_llm_*` tools), run with
-  `npx -y github:hlgr360/local-llm-mcp#v3.3.0`. A plugin has no build step, so the server is
+- **The `local_llm` MCP server** (17 `local_llm_*` tools), run with
+  `npx -y github:hlgr360/local-llm-mcp#v3.4.0`. Besides generating, reviewing and explaining
+  code and files, it can review git changes without loading the diff into Claude's context
+  (`local_llm_review_diff`) and digest long test or build logs into their failures
+  (`local_llm_digest_file`). A plugin has no build step, so the server is
   installed by `npx` on first start; this needs Node.js 22 or later and network access to GitHub
   the first time.
 - **A Read-gate hook** (`PreToolUse` on `Read`, needs `jq` and `curl`). It blocks the first
@@ -40,10 +43,18 @@ profile. All are optional:
 | `LOCAL_LLM_CHAT_MODEL` | auto-detected | Model for the chat tools, e.g. `gemma4:e4b-mlx` |
 | `LOCAL_LLM_EMBEDDING_MODEL` | auto-detected | Model for `local_llm_semantic_similarity`, e.g. `nomic-embed-text` |
 | `LOCAL_LLM_MIN_CTX` | `32768` | Ollama only: minimum context window; a larger configured one is kept |
+| `LOCAL_LLM_DECISION_MODEL` | an installed one | Ollama only: decision model for thinking decisions (see below), or `off` |
 
 With Ollama, a configured model that isn't installed is pulled on first use
 (`LOCAL_LLM_AUTO_PULL=0` turns that off). All settings, backends and tools are described in the
 [project README](https://github.com/hlgr360/local-llm-mcp#readme).
+
+## Thinking decisions (Ollama)
+
+With a decision model installed (`ollama pull laya`) and a chat model that can think, the
+server asks the decision model before each call whether the request needs reasoning, and
+turns the chat model's thinking on or off accordingly: fast answers for routine requests,
+reasoning for hard ones. Nothing to configure; without a decision model nothing changes.
 
 The project repository also has its own marketplace (`local-llm-mcp@local-llm-mcp-marketplace`).
 Install the plugin from one marketplace only, or the hook and server are registered twice.
